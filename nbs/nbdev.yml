@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "humble-database"
+  site-url: "https://schlinkertc.github.io/humble-database"
+  description: "A simple interface for managing database connections and queries"
+  repo-branch: main
+  repo-url: "https://github.com/schlinkertc/humble-database"

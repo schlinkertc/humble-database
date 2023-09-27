@@ -17,7 +17,7 @@ pip install humble_database
 Fill me in please! Don’t forget code examples:
 
 ``` python
-1+1
+"https://data.wa.gov/api/views/f6w7-q2d2/rows.csv?accessType=DOWNLOAD"
 ```
 
     2

@@ -14,6 +14,9 @@ from abc import ABC, abstractproperty,abstractmethod
 from contextlib import contextmanager
 import inspect
 import pandas as pd
+from json2html import json2html
+from IPython.display import HTML
+import logging
 
 # %% ../nbs/00_core.ipynb 5
 def delegates(to=None, keep=False):
@@ -139,9 +142,40 @@ from pydantic import BaseModel,ConfigDict,Field
 from typing import Generic, List, TypeVar
 
 # %% ../nbs/00_core.ipynb 24
-DataModelT = TypeVar('DataModelT')
+def recursive_shorten_json(obj):
+  """
+  Recursively shortens a JSON object.
+
+  Args:
+    obj: The JSON object to shorten.
+
+  Returns:
+    The shortened JSON object.
+  """
+
+  # If the object is a string, return it.
+  if isinstance(obj, str):
+    return obj
+
+  # If the object is an array, shorten each element.
+  if isinstance(obj, list):
+      
+      return obj[:2]
+
+  # If the object is a dictionary, shorten the keys and values.
+  if isinstance(obj, dict):
+    return {
+        recursive_shorten_json(key): recursive_shorten_json(value)
+        for key, value in obj.items()
+    }
+
+  # If the object is any other type, return it.
+  return obj
 
 # %% ../nbs/00_core.ipynb 25
+DataModelT = TypeVar('DataModelT')
+
+# %% ../nbs/00_core.ipynb 26
 class DataModel(BaseModel,Generic[DataModelT]):
     data: List[DataModelT]
 
@@ -151,6 +185,46 @@ class DataModel(BaseModel,Generic[DataModelT]):
         data = [x.model_dump(**kwargs) for x in self.data]
         return pd.DataFrame(data)
 
+    @classmethod
+    def display_html_schema(cls):
+        return HTML(
+            json2html.convert(
+                cls.model_json_schema(
+                    mode='serialization')
+            )
+        )
+        
+    # def _repr_html_(self):
+    #     try:
+    #         as_json = self.model_dump(mode='json')
+    #         shortened = recursive_shorten_json(as_json)
+    #         return json2html.convert(
+    #             shortened
+    #         )
+    #     except Exception as e:
+    #         logging.warning(e)
+    #         pass
+    
+    def _repr_html_(self):
+        try:
+            df_html = self.to_dataframe().head()._repr_html_()
+            schema = self.model_json_schema()
+            html_fields = [
+                f"<header><b>{schema_field}</b>: {schema.get(schema_field)}\n</header>"
+                for schema_field in ['title','description']
+            ]
+            for field in self.model_fields.keys():
+                if field!='data':
+                    html_fields.append(
+                        f'<header><b>{field}</b>: {getattr(self,field)}</header>'
+                    )
+            return ''.join(
+                x for x in html_fields + ['<header><b>DataFrame</b>: </header>',df_html]
+            )
+        except Exception as e:
+            logging.warning(e)
+            pass
+    
     def _repr_json_(self):
         try:
             return self.model_dump(mode='json')
@@ -158,10 +232,10 @@ class DataModel(BaseModel,Generic[DataModelT]):
             logging.warning(e)
             pass
 
-# %% ../nbs/00_core.ipynb 26
+# %% ../nbs/00_core.ipynb 27
 class Query(DataModel,Generic[DataModelT]):
     query: str
-    data: List[DataModelT] = {}
+    data: List[DataModelT] = []
 
     def __call__(
         self,

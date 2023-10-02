@@ -18,6 +18,11 @@ DataModelT = TypeVar('DataModelT')
 
 # %% ../nbs/02_data_model.ipynb 5
 class DataModel(BaseModel,Generic[DataModelT]):
+    """
+    A Generic Data Model. The data attribute contains a list of objects of an arbitrary type. It is intended for use with a Pydantic model. 
+    
+    Supports rich __repr__ displays in HTML and Javascript for use in Jupyter Notebook and Lab, respectively. 
+    """
     data: List[DataModelT]
 
     @delegates(BaseModel.model_dump)
@@ -62,7 +67,7 @@ class DataModel(BaseModel,Generic[DataModelT]):
             logging.warning(e)
             pass
 
-# %% ../nbs/02_data_model.ipynb 16
+# %% ../nbs/02_data_model.ipynb 22
 class Query(DataModel,Generic[DataModelT]):
     query: str
     data: List[DataModelT] = []

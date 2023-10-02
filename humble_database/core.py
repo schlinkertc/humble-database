@@ -3,19 +3,6 @@
 # %% auto 0
 __all__ = []
 
-# %% ../nbs/00_core.ipynb 2
-from humble_database.database import Database
-from humble_database.utils import delegates
-import sqlalchemy
-from sqlalchemy import create_engine, URL, Engine
-from sqlalchemy.orm import Session
-from pydantic import SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional,Union
-from abc import ABC, abstractproperty,abstractmethod
-from contextlib import contextmanager
-import inspect
-import pandas as pd
-from json2html import json2html
-from IPython.display import HTML
-import logging
+# %% ../nbs/00_core.ipynb 3
+from .database import Database
+from .data_model import DataModel,Query

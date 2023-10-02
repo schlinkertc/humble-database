@@ -3,10 +3,10 @@
 # %% auto 0
 __all__ = ['delegates']
 
-# %% ../nbs/99_utils.ipynb 1
+# %% ../nbs/99_utils.ipynb 2
 import inspect
 
-# %% ../nbs/99_utils.ipynb 3
+# %% ../nbs/99_utils.ipynb 5
 def delegates(to=None, keep=False):
     "Decorator: replace `**kwargs` in signature with params from `to`"
     def _f(f):

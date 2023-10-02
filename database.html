@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Using Pydantic’s BaseSettings object to manage SQLAlchemy Database engines.">
+
+<title>humble-database - database</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="humble-database - database">
+<meta property="og:description" content="Using Pydantic’s BaseSettings object to manage SQLAlchemy Database engines.">
+<meta property="og:site-name" content="humble-database">
+<meta name="twitter:title" content="humble-database - database">
+<meta name="twitter:description" content="Using Pydantic’s BaseSettings object to manage SQLAlchemy Database engines.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">humble-database</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools ms-auto">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./database.html">database</a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">humble-database</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./database.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">database</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data_model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data_model</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">utils</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sql-alchemy-connection" id="toc-sql-alchemy-connection" class="nav-link active" data-scroll-target="#sql-alchemy-connection">SQL Alchemy Connection</a>
+  <ul class="collapse">
+  <li><a href="#url.create" id="toc-url.create" class="nav-link" data-scroll-target="#url.create">URL.create</a></li>
+  </ul></li>
+  <li><a href="#database-settings" id="toc-database-settings" class="nav-link" data-scroll-target="#database-settings">Database Settings</a>
+  <ul class="collapse">
+  <li><a href="#databasesettings" id="toc-databasesettings" class="nav-link" data-scroll-target="#databasesettings">DatabaseSettings</a></li>
+  <li><a href="#abstractdatabaseclass" id="toc-abstractdatabaseclass" class="nav-link" data-scroll-target="#abstractdatabaseclass">AbstractDatabaseClass</a></li>
+  <li><a href="#database" id="toc-database" class="nav-link" data-scroll-target="#database">Database</a></li>
+  </ul></li>
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples:</a>
+  <ul class="collapse">
+  <li><a href="#create-a-sub-class-to-handle-connections-to-a-specific-database" id="toc-create-a-sub-class-to-handle-connections-to-a-specific-database" class="nav-link" data-scroll-target="#create-a-sub-class-to-handle-connections-to-a-specific-database">Create a sub-class to handle connections to a specific database</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/schlinkertc/humble-database/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">database</h1>
+</div>
+
+<div>
+  <div class="description">
+    Using Pydantic’s BaseSettings object to manage SQLAlchemy Database engines.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<section id="sql-alchemy-connection" class="level2">
+<h2 class="anchored" data-anchor-id="sql-alchemy-connection">SQL Alchemy Connection</h2>
+<blockquote class="blockquote">
+<p>To create our Database connections, we will use SQL Alchemy’s <code>URL</code> object</p>
+</blockquote>
+<p>The following is from the SQL Alchemy fucntional documentation:</p>
+<hr>
+<section id="url.create" class="level3">
+<h3 class="anchored" data-anchor-id="url.create">URL.create</h3>
+<blockquote class="blockquote">
+<pre><code> URL.create (drivername:str, username:Optional[str]=None,
+             password:Optional[str]=None, host:Optional[str]=None,
+             port:Optional[int]=None, database:Optional[str]=None, query:M
+             apping[str,Union[Sequence[str],str]]=immutabledict({}))</code></pre>
+</blockquote>
+<p>Create a new :class:<code>_engine.URL</code> object.</p>
+<p>.. seealso::</p>
+<pre><code>:ref:`database_urls`</code></pre>
+<p>:param drivername: the name of the database backend. This name will correspond to a module in sqlalchemy/databases or a third party plug-in. :param username: The user name. :param password: database password. Is typically a string, but may also be an object that can be stringified with <code>str()</code>.</p>
+<p>.. note:: A password-producing object will be stringified only <strong>once</strong> per :class:<code>_engine.Engine</code> object. For dynamic password generation per connect, see :ref:<code>engines_dynamic_tokens</code>.</p>
+<p>:param host: The name of the host. :param port: The port number. :param database: The database name. :param query: A dictionary of string keys to string values to be passed to the dialect and/or the DBAPI upon connect. To specify non-string parameters to a Python DBAPI directly, use the :paramref:<code>_sa.create_engine.connect_args</code> parameter to :func:<code>_sa.create_engine</code>. See also :attr:<code>_engine.URL.normalized_query</code> for a dictionary that is consistently string-&gt;list of string. :return: new :class:<code>_engine.URL</code> object.</p>
+<p>.. versionadded:: 1.4</p>
+<pre><code>The :class:`_engine.URL` object is now an **immutable named
+tuple**.  In addition, the ``query`` dictionary is also immutable.
+To create a URL, use the :func:`_engine.url.make_url` or
+:meth:`_engine.URL.create` function/ method.  To modify a
+:class:`_engine.URL`, use the :meth:`_engine.URL.set` and
+:meth:`_engine.URL.update_query` methods.</code></pre>
+</section>
+</section>
+<section id="database-settings" class="level2">
+<h2 class="anchored" data-anchor-id="database-settings">Database Settings</h2>
+<blockquote class="blockquote">
+<p>A Pydantic model that controls argumetns passed to the SQL alchemy URL constructor</p>
+</blockquote>
+<hr>
+<p><a href="https://github.com/schlinkertc/humble-database/blob/main/humble_database/database.py#L20" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="databasesettings" class="level3">
+<h3 class="anchored" data-anchor-id="databasesettings">DatabaseSettings</h3>
+<blockquote class="blockquote">
+<pre><code> DatabaseSettings (_case_sensitive:bool|None=None,
+                   _env_prefix:str|None=None,
+                   _env_file:DotenvType|None=Path('.'),
+                   _env_file_encoding:str|None=None,
+                   _env_nested_delimiter:str|None=None,
+                   _secrets_dir:str|Path|None=None, drivername:str,
+                   username:Optional[str]=None,
+                   password:Optional[pydantic.types.SecretStr]=None,
+                   host:Optional[str]=None, port:Optional[int]=None,
+                   database:Optional[str]=None, query:dict[str,str]={})</code></pre>
+</blockquote>
+<p>Base class for settings, allowing values to be overridden by environment variables.</p>
+<p>This is useful in production for secrets you do not wish to save in code, it plays nicely with docker(-compose), Heroku and any 12 factor app design.</p>
+<p>All the below attributes can be set via <code>model_config</code>.</p>
+<p>Args: _case_sensitive: Whether environment variables names should be read with case-sensitivity. Defaults to <code>None</code>. _env_prefix: Prefix for all environment variables. Defaults to <code>None</code>. _env_file: The env file(s) to load settings values from. Defaults to <code>Path('')</code>, which means that the value from <code>model_config['env_file']</code> should be used. You can also pass <code>None</code> to indicate that environment variables should not be loaded from an env file. _env_file_encoding: The env file encoding, e.g.&nbsp;<code>'latin-1'</code>. Defaults to <code>None</code>. _env_nested_delimiter: The nested env values delimiter. Defaults to <code>None</code>. _secrets_dir: The secret files directory. Defaults to <code>None</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>settings <span class="op">=</span> DatabaseSettings(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    drivername<span class="op">=</span><span class="st">'sqlite'</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    database<span class="op">=</span><span class="st">'test.db'</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>settings</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>DatabaseSettings(drivername='sqlite', username=None, password=None, host=None, port=None, database='test.db', query={})</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> URL.create(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>settings.model_dump()</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>engine <span class="op">=</span> create_engine(url)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>engine</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>Engine(sqlite:///test.db)</code></pre>
+</div>
+</div>
+<section id="why-use-pydantic-for-database-settings" class="level4">
+<h4 class="anchored" data-anchor-id="why-use-pydantic-for-database-settings">Why use Pydantic for Database Settings?</h4>
+<blockquote class="blockquote">
+<p>Pydantic’s <code>BaseSettings</code> object comes with support for environment variables and secret strings</p>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set some environment variables</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">'username'</span>]<span class="op">=</span><span class="st">'humble_chuck'</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">'password'</span>]<span class="op">=</span><span class="st">'super secret passkey'</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># pydantic automatically reads them</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>settings <span class="op">=</span> DatabaseSettings(drivername<span class="op">=</span><span class="st">'mysql'</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> settings.username <span class="op">==</span> <span class="st">'humble_chuck'</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># pydantic also keeps your password safe from displays</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"password prints as a secret: </span><span class="sc">{</span>settings<span class="sc">.</span>password<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co"># by default, __init__ values take precedence over environment variables</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>alternate_settings <span class="op">=</span> DatabaseSettings(drivername<span class="op">=</span><span class="st">'mysql'</span>,username<span class="op">=</span><span class="st">'some_other_person'</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> alternate_settings.username <span class="op">==</span> <span class="st">'some_other_person'</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="st">'username'</span>,<span class="st">'password'</span>):</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    os.environ.pop(k)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>password prints as a secret: **********</code></pre>
+</div>
+</div>
+<hr>
+<p><a href="https://github.com/schlinkertc/humble-database/blob/main/humble_database/database.py#L32" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+</section>
+<section id="abstractdatabaseclass" class="level3">
+<h3 class="anchored" data-anchor-id="abstractdatabaseclass">AbstractDatabaseClass</h3>
+<blockquote class="blockquote">
+<pre><code> AbstractDatabaseClass ()</code></pre>
+</blockquote>
+<p>Abstract Base Class used to define methods for all Database Connections.</p>
+<p>A seperate Base Class is required because Snowflake Database Settings will behave differently, and thus they will need their own Database Settings class.</p>
+<hr>
+<p><a href="https://github.com/schlinkertc/humble-database/blob/main/humble_database/database.py#L87" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="database" class="level3">
+<h3 class="anchored" data-anchor-id="database">Database</h3>
+<blockquote class="blockquote">
+<pre><code> Database (drivername:str, username:Optional[str]=None,
+           password:Optional[pydantic.types.SecretStr]=None,
+           host:Optional[str]=None, port:Optional[int]=None,
+           database:Optional[str]=None, query:dict[str,str]={})</code></pre>
+</blockquote>
+<p>Create a Database connection with default functionality.</p>
+<p>Inherits attributes from <a href="https://schlinkertc.github.io/humble-database/database.html#databasesettings"><code>DatabaseSettings</code></a> to manage credentials. Inherits methods from <a href="https://schlinkertc.github.io/humble-database/database.html#abstractdatabaseclass"><code>AbstractDatabaseClass</code></a>.</p>
+<p>Use the class as-is to quickly create a database connection, or create a subclass to control connections to a specific database.</p>
+<p>More on SQL Alchemy engines from <a href="https://docs.sqlalchemy.org/en/13/core/engines.html">SQLAlchemy docs</a>:</p>
+<ul>
+<li>The Engine is the starting point for any SQLAlchemy application. It’s “home base” for the actual database and its DBAPI.<br>
+</li>
+<li>An Engine references both a Dialect and a Pool, which together interpret the DBAPI’s module functions as well as the behavior of the database</li>
+<li>Pool object which will establish a DBAPI connection at localhost:5432 when a connection request is first received<br>
+– Note that the Engine and its underlying Pool do <strong>not</strong> establish the first actual DBAPI connection until the Engine.connect() method is called, or an operation which is dependent on this method such as Engine.execute() is invoked.</li>
+<li>In this way, Engine and Pool can be said to have a lazy initialization behavior.<br>
+</li>
+<li>The Engine, once created, can either be used directly to interact with the database, or can be passed to a Session object to work with the ORM.</li>
+</ul>
+</section>
+</section>
+<section id="examples" class="level2">
+<h2 class="anchored" data-anchor-id="examples">Examples:</h2>
+<p>To use the <a href="https://schlinkertc.github.io/humble-database/database.html#database"><code>Database</code></a> as-is, pass the desired variables to the constructor:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> Database(drivername<span class="op">=</span><span class="st">'sqlite'</span>,database<span class="op">=</span><span class="st">'test.db'</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(db)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>users <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'id'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'user'</span>:[<span class="st">'larry'</span>,<span class="st">'moe'</span>,<span class="st">'curly'</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> db.engine_scope() <span class="im">as</span> conn:</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    users.to_sql(<span class="st">'users'</span>,conn,if_exists<span class="op">=</span><span class="st">'replace'</span>,index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>queried <span class="op">=</span> db.query_to_df(<span class="st">"select * from users"</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> queried.equals(users)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>os.remove(<span class="st">'test.db'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>drivername='sqlite' username=None password=None host=None port=None database='test.db' query={}</code></pre>
+</div>
+</div>
+<section id="create-a-sub-class-to-handle-connections-to-a-specific-database" class="level3">
+<h3 class="anchored" data-anchor-id="create-a-sub-class-to-handle-connections-to-a-specific-database">Create a sub-class to handle connections to a specific database</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> RNACentralDatabase(Database):</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    model_config <span class="op">=</span> SettingsConfigDict(env_prefix<span class="op">=</span><span class="st">'rna_db_'</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    drivername<span class="op">=</span><span class="st">'postgresql'</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    database<span class="op">=</span><span class="st">'pfmegrnargs'</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    host<span class="op">=</span><span class="st">'hh-pgsql-public.ebi.ac.uk'</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    port<span class="op">=</span><span class="dv">5432</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">'rna_db_username'</span>]<span class="op">=</span><span class="st">'reader'</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">'rna_db_password'</span>]<span class="op">=</span><span class="st">'NWDMCE5xdipIjRrp'</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>rna_db <span class="op">=</span> RNACentralDatabase()</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>rna_db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>rna_db.query_to_df(<span class="st">"""select * from rnc_database limit 5"""</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">id</th>
+<th data-quarto-table-cell-role="th">timestamp</th>
+<th data-quarto-table-cell-role="th">userstamp</th>
+<th data-quarto-table-cell-role="th">descr</th>
+<th data-quarto-table-cell-role="th">current_release</th>
+<th data-quarto-table-cell-role="th">full_descr</th>
+<th data-quarto-table-cell-role="th">alive</th>
+<th data-quarto-table-cell-role="th">for_release</th>
+<th data-quarto-table-cell-role="th">display_name</th>
+<th data-quarto-table-cell-role="th">project_id</th>
+<th data-quarto-table-cell-role="th">avg_length</th>
+<th data-quarto-table-cell-role="th">min_length</th>
+<th data-quarto-table-cell-role="th">max_length</th>
+<th data-quarto-table-cell-role="th">num_sequences</th>
+<th data-quarto-table-cell-role="th">num_organisms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>5</td>
+<td>2017-05-17</td>
+<td>RNACEN</td>
+<td>VEGA</td>
+<td>98</td>
+<td>VEGA</td>
+<td>N</td>
+<td>None</td>
+<td>VEGA</td>
+<td>PRJEB4568</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>1</td>
+<td>2017-05-01</td>
+<td>RNACEN</td>
+<td>ENA</td>
+<td>731</td>
+<td>ENA</td>
+<td>Y</td>
+<td>None</td>
+<td>ENA</td>
+<td>None</td>
+<td>412.0</td>
+<td>10.0</td>
+<td>900074.0</td>
+<td>12086180</td>
+<td>814855</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>26</td>
+<td>2017-05-01</td>
+<td>RNACEN</td>
+<td>GENCODE</td>
+<td>450</td>
+<td>GENCODE</td>
+<td>N</td>
+<td>None</td>
+<td>GENCODE</td>
+<td>None</td>
+<td>889.0</td>
+<td>32.0</td>
+<td>205012.0</td>
+<td>47677</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>3</td>
+<td>2017-05-01</td>
+<td>RNACEN</td>
+<td>SRPDB</td>
+<td>732</td>
+<td>SRPDB</td>
+<td>Y</td>
+<td>None</td>
+<td>SRPDB</td>
+<td>PRJEB4384</td>
+<td>173.0</td>
+<td>30.0</td>
+<td>533.0</td>
+<td>503</td>
+<td>684</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>15</td>
+<td>2017-05-02</td>
+<td>RNACEN</td>
+<td>WORMBASE</td>
+<td>735</td>
+<td>WormBase</td>
+<td>Y</td>
+<td>None</td>
+<td>WormBase</td>
+<td>PRJNA13758</td>
+<td>174.0</td>
+<td>17.0</td>
+<td>84141.0</td>
+<td>26116</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>rna_db.query_to_records(<span class="st">"select id,timestamp from rnc_database limit 1"</span>)[<span class="dv">0</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'id': 5, 'timestamp': datetime.datetime(2017, 5, 17, 0, 0)}</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> rna_db.engine_scope() <span class="im">as</span> conn: </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> conn.execute(text(<span class="st">"""select * from rnc_database limit 5"""</span>))</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(result.fetchall()[<span class="dv">0</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>(5, datetime.datetime(2017, 5, 17, 0, 0), 'RNACEN', 'VEGA', 98, 'VEGA', 'N', None, 'VEGA', 'PRJEB4568', None, None, None, 0, 0)</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

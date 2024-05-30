@@ -23,7 +23,7 @@ class DataModel(BaseModel,Generic[DataModelT]):
     
     Supports rich __repr__ displays in HTML and Javascript for use in Jupyter Notebook and Lab, respectively. 
     """
-    data: List[DataModelT]
+    data: List[DataModelT] = []
 
     @delegates(BaseModel.model_dump)
     def to_dataframe(self,**kwargs):
@@ -36,7 +36,8 @@ class DataModel(BaseModel,Generic[DataModelT]):
         return HTML(
             json2html.convert(
                 cls.model_json_schema(
-                    mode='serialization')
+                    mode='serialization'
+                )
             )
         )
     
@@ -67,7 +68,7 @@ class DataModel(BaseModel,Generic[DataModelT]):
             logging.warning(e)
             pass
 
-# %% ../nbs/02_data_model.ipynb 22
+# %% ../nbs/02_data_model.ipynb 23
 class Query(DataModel,Generic[DataModelT]):
     query: str
     data: List[DataModelT] = []

@@ -13,6 +13,7 @@ if int(sqlalchemy.__version__[0]) < 2:
     from sqlalchemy.engine.url import URL
     from sqlalchemy.engine import create_engine,Engine
     from snowflake.sqlalchemy import URL as SnowflakeURL
+
 else:
     from sqlalchemy import URL
     from sqlalchemy import create_engine, Engine
@@ -25,6 +26,7 @@ from abc import ABC, abstractproperty,abstractmethod
 from contextlib import contextmanager
 import pandas as pd
 from sqlalchemy import text
+
 
 # %% ../nbs/01_database.ipynb 8
 class DatabaseSettingsBase(BaseSettings):

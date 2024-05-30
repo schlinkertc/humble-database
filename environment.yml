@@ -1,0 +1,13 @@
+name: hd-dev
+channels: 
+    - defaults
+    - conda-forge
+dependencies: 
+    - python=3.10
+    - nbdev
+    - jupyterlab
+    - sqlalchemy
+    - snowflake-sqlalchemy
+    - pandas
+    - pydantic
+    - pydantic-settings
